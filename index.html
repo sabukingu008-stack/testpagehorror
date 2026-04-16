@@ -645,27 +645,8 @@ function toggleConfig() {
   if (show) loadInputs();
 }
 
-// 複数プロキシを順番に試してどれかが成功したら使う
-const PROXIES = [
-  async (url) => {
-    const res = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`);
-    if (!res.ok) throw new Error(res.status);
-    const text = await res.text();
-    return new DOMParser().parseFromString(text, 'text/xml');
-  },
-  async (url) => {
-    const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`);
-    if (!res.ok) throw new Error(res.status);
-    const text = await res.text();
-    return new DOMParser().parseFromString(text, 'text/xml');
-  },
-  async (url) => {
-    const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
-    if (!res.ok) throw new Error(res.status);
-    const json = await res.json();
-    return new DOMParser().parseFromString(json.contents, 'text/xml');
-  },
-];
+// rss2json.com経由でRSSをJSONとして取得（CORS問題なし）
+const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
 
 function timeAgo(dateStr) {
   const d = new Date(dateStr);
@@ -676,18 +657,17 @@ function timeAgo(dateStr) {
   return Math.floor(diff/86400) + 'D AGO';
 }
 
-async function fetchXML(url) {
-  for (const proxy of PROXIES) {
-    try {
-      const xml = await proxy(url);
-      // パースエラーチェック
-      if (xml.querySelector('parsererror')) continue;
-      return xml;
-    } catch(e) {
-      continue;
-    }
+async function fetchRSS(url) {
+  try {
+    const res = await fetch(RSS2JSON + encodeURIComponent(url));
+    if (!res.ok) throw new Error(res.status);
+    const json = await res.json();
+    if (json.status !== 'ok') throw new Error(json.message);
+    return json;
+  } catch(e) {
+    console.warn('fetchRSS failed:', url, e);
+    return null;
   }
-  return null;
 }
 
 async function loadYoutube() {
@@ -699,17 +679,20 @@ async function loadYoutube() {
   for (const chId of config.yt) {
     if (!chId) continue;
     const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${chId}`;
-    const xml = await fetchXML(url);
-    if (!xml) continue;
-    const entries = xml.querySelectorAll('entry');
-    entries.forEach(e => {
-      const videoId = e.querySelector('videoId')?.textContent;
-      const title = e.querySelector('title')?.textContent;
-      const author = e.querySelector('author name')?.textContent;
-      const published = e.querySelector('published')?.textContent;
-      const thumb = videoId ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg` : null;
-      const link = `https://www.youtube.com/watch?v=${videoId}`;
-      if (title && videoId) allItems.push({ title, author, published, thumb, link, type: 'youtube' });
+    const data = await fetchRSS(url);
+    if (!data || !data.items) continue;
+    data.items.forEach(item => {
+      const link = item.link || '';
+      const videoId = link.includes('v=') ? link.split('v=')[1].split('&')[0] : null;
+      const thumb = videoId ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg` : (item.thumbnail || null);
+      allItems.push({
+        title: item.title,
+        author: data.feed?.title || item.author || '',
+        published: item.pubDate,
+        thumb,
+        link,
+        type: 'youtube'
+      });
     });
   }
 
