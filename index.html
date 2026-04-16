@@ -729,15 +729,17 @@ async function loadReddit() {
   for (const sub of config.subs) {
     if (!sub) continue;
     const url = `https://www.reddit.com/r/${sub}/hot.rss?limit=10`;
-    const xml = await fetchXML(url);
-    if (!xml) continue;
-    const items = xml.querySelectorAll('item, entry');
-    items.forEach(e => {
-      const title = e.querySelector('title')?.textContent?.replace('<![CDATA[','').replace(']]>','');
-      const link = e.querySelector('link')?.textContent || e.querySelector('link')?.getAttribute('href');
-      const published = e.querySelector('pubDate')?.textContent || e.querySelector('published')?.textContent;
-      const author = sub;
-      if (title && link) allItems.push({ title, link, published, author: 'r/' + sub });
+    const data = await fetchRSS(url);
+    if (!data || !data.items) continue;
+    data.items.forEach(item => {
+      if (item.title && item.link) {
+        allItems.push({
+          title: item.title,
+          link: item.link,
+          published: item.pubDate,
+          author: 'r/' + sub
+        });
+      }
     });
   }
 
