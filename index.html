@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HORROR FEED</title>
+<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blood: #8B0000;
+    --blood-bright: #CC0000;
+    --void: #050508;
+    --dark: #0D0D12;
+    --panel: #111118;
+    --border: #1e1e2a;
+    --muted: #3a3a4a;
+    --text: #c8c8d8;
+    --dim: #7070888;
+    --accent: #FF2244;
+    --youtube: #FF0000;
+    --reddit: #FF4500;
+    --discord: #5865F2;
+    --glow: 0 0 20px rgba(139,0,0,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(139,0,0,0.15) 0%, transparent 60%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Crect width='4' height='4' fill='%23050508'/%3E%3Crect x='0' y='0' width='1' height='1' fill='%23080810' opacity='0.5'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Scanlines */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Header */
+  header {
+    padding: 40px 0 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  .logo {
+    font-family: 'Creepster', cursive;
+    font-size: clamp(3rem, 8vw, 6rem);
+    color: var(--blood-bright);
+    text-shadow: 
+      0 0 30px rgba(204,0,0,0.8),
+      0 0 60px rgba(139,0,0,0.4),
+      3px 3px 0 #000;
+    letter-spacing: 0.1em;
+    animation: flicker 8s infinite;
+    line-height: 1;
+  }
+
+  .tagline {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  .drip {
+    display: block;
+    width: 100%;
+    height: 20px;
+    background: linear-gradient(180deg, var(--blood) 0%, transparent 100%);
+    opacity: 0.3;
+    margin-top: 10px;
+    clip-path: polygon(
+      0 0, 3% 0, 3% 60%, 2% 100%, 4% 60%, 4% 0,
+      8% 0, 8% 80%, 7% 100%, 9% 80%, 9% 0,
+      15% 0, 15% 50%, 14% 100%, 16% 50%, 16% 0,
+      22% 0, 22% 70%, 21% 100%, 23% 70%, 23% 0,
+      100% 0
+    );
+  }
+
+  @keyframes flicker {
+    0%, 95%, 100% { opacity: 1; }
+    96% { opacity: 0.8; }
+    97% { opacity: 1; }
+    98% { opacity: 0.6; }
+    99% { opacity: 1; }
+  }
+
+  /* Nav / Last updated */
+  .meta-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 30px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .status-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--blood-bright);
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 6px var(--blood-bright); }
+    50% { opacity: 0.4; box-shadow: none; }
+  }
+
+  .refresh-btn {
+    background: none;
+    border: 1px solid var(--muted);
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.2s;
+  }
+
+  .refresh-btn:hover {
+    border-color: var(--blood-bright);
+    color: var(--blood-bright);
+  }
+
+  /* Discord banner */
+  .discord-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, rgba(88,101,242,0.15), rgba(88,101,242,0.05));
+    border: 1px solid rgba(88,101,242,0.3);
+    border-left: 3px solid var(--discord);
+    padding: 14px 20px;
+    margin-bottom: 30px;
+    gap: 16px;
+  }
+
+  .discord-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .discord-icon {
+    font-size: 1.5rem;
+  }
+
+  .discord-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fff;
+  }
+
+  .discord-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .discord-join {
+    background: var(--discord);
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+
+  .discord-join:hover { background: #4752d4; }
+
+  /* Section */
+  .section {
+    margin-bottom: 40px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-icon {
+    font-size: 1.1rem;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .section-source {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    margin-left: auto;
+  }
+
+  .source-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: 0.65rem;
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 0.1em;
+    border: 1px solid;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+
+  .badge-youtube { color: var(--youtube); border-color: var(--youtube); }
+  .badge-reddit { color: var(--reddit); border-color: var(--reddit); }
+
+  /* Feed grid */
+  .feed-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+  }
+
+  .feed-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    text-decoration: none;
+    color: var(--text);
+    display: block;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feed-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--blood);
+    transform: scaleY(0);
+    transition: transform 0.2s;
+    transform-origin: bottom;
+  }
+
+  .feed-card:hover {
+    border-color: var(--blood);
+    background: #16161e;
+    transform: translateY(-2px);
+    box-shadow: var(--glow);
+  }
+
+  .feed-card:hover::before { transform: scaleY(1); }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .channel-thumb {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .channel-name {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-date {
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    margin-left: auto;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #ddd;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .feed-card:hover .card-title { color: #fff; }
+
+  /* Thumbnail for YouTube */
+  .card-thumb {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    margin-bottom: 10px;
+    background: var(--border);
+  }
+
+  /* Loading / error */
+  .loading {
+    text-align: center;
+    padding: 40px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+  }
+
+  .loading::after {
+    content: '...';
+    animation: dots 1.5s infinite;
+  }
+
+  @keyframes dots {
+    0% { content: '.'; }
+    33% { content: '..'; }
+    66% { content: '...'; }
+  }
+
+  .error-msg {
+    text-align: center;
+    padding: 30px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--blood-bright);
+    border: 1px solid rgba(204,0,0,0.2);
+    background: rgba(139,0,0,0.05);
+  }
+
+  /* Config panel */
+  .config-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--blood);
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+
+  .config-title {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+
+  .config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+  }
+
+  .config-item label {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-family: 'Share Tech Mono', monospace;
+    margin-bottom: 4px;
+  }
+
+  .config-item input {
+    width: 100%;
+    background: var(--dark);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    outline: none;
+    transition: border 0.2s;
+  }
+
+  .config-item input:focus { border-color: var(--blood-bright); }
+
+  .config-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    background: var(--blood);
+    color: #fff;
+    border: none;
+    padding: 7px 18px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn:hover { background: var(--blood-bright); }
+  .btn.secondary { background: var(--dark); border: 1px solid var(--border); color: var(--muted); }
+  .btn.secondary:hover { border-color: var(--blood-bright); color: var(--blood-bright); background: var(--dark); }
+
+  /* Toggle config */
+  .toggle-config {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    padding: 0;
+    text-decoration: underline;
+  }
+  .toggle-config:hover { color: var(--blood-bright); }
+
+  footer {
+    text-align: center;
+    padding: 30px 0;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    border-top: 1px solid var(--border);
+    margin-top: 20px;
+  }
+
+  @media (max-width: 600px) {
+    .feed-grid { grid-template-columns: 1fr; }
+    .meta-bar { flex-direction: column; gap: 8px; align-items: flex-start; }
+    .discord-banner { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo">👻 HORROR FEED</div>
+    <div class="tagline">// your daily dose of dread //</div>
+    <div class="drip"></div>
+  </header>
+
+  <div class="meta-bar">
+    <span><span class="status-dot"></span>LIVE FEED</span>
+    <span id="last-updated">LOADING...</span>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="toggle-config" onclick="toggleConfig()">⚙ SETTINGS</button>
+      <button class="refresh-btn" onclick="loadAll()">↺ REFRESH</button>
+    </div>
+  </div>
+
+  <!-- Config Panel -->
+  <div class="config-section" id="config-panel" style="display:none">
+    <div class="config-title">// FEED SETTINGS — チャンネルIDやSubredditを変更できます</div>
+    <div class="config-grid">
+      <div class="config-item">
+        <label>YOUTUBE CHANNEL ID 1</label>
+        <input type="text" id="yt1" placeholder="例: UCxxxxxxxxxxxxxx">
+      </div>
+      <div class="config-item">
+        <label>YOUTUBE CHANNEL ID 2</label>
+        <input type="text" id="yt2" placeholder="例: UCxxxxxxxxxxxxxx">
+      </div>
+      <div class="config-item">
+        <label>YOUTUBE CHANNEL ID 3</label>
+        <input type="text" id="yt3" placeholder="例: UCxxxxxxxxxxxxxx">
+      </div>
+      <div class="config-item">
+        <label>SUBREDDIT 1</label>
+        <input type="text" id="sub1" placeholder="例: horror">
+      </div>
+      <div class="config-item">
+        <label>SUBREDDIT 2</label>
+        <input type="text" id="sub2" placeholder="例: Paranormal">
+      </div>
+      <div class="config-item">
+        <label>DISCORD 招待リンク</label>
+        <input type="text" id="discord-url" placeholder="例: https://discord.gg/xxxxxx">
+      </div>
+      <div class="config-item">
+        <label>DISCORD コミュニティ名</label>
+        <input type="text" id="discord-name" placeholder="例: Halloween Horror Community">
+      </div>
+    </div>
+    <div class="config-actions">
+      <button class="btn" onclick="saveConfig()">💾 SAVE & RELOAD</button>
+      <button class="btn secondary" onclick="resetConfig()">RESET TO DEFAULT</button>
+    </div>
+  </div>
+
+  <!-- Discord Banner -->
+  <div class="discord-banner" id="discord-banner">
+    <div class="discord-info">
+      <div class="discord-icon">💬</div>
+      <div>
+        <div class="discord-name" id="discord-display-name">Halloween Horror Community</div>
+        <div class="discord-desc">// DISCORD COMMUNITY — JOIN THE DARKNESS //</div>
+      </div>
+    </div>
+    <a class="discord-join" id="discord-link" href="#" target="_blank">JOIN SERVER →</a>
+  </div>
+
+  <!-- YouTube Section -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">▶</span>
+      <span class="section-title">YouTube</span>
+      <span class="source-badge badge-youtube">YT RSS</span>
+    </div>
+    <div class="feed-grid" id="youtube-feed">
+      <div class="loading">LOADING HORROR VIDEOS</div>
+    </div>
+  </div>
+
+  <!-- Reddit Section -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-icon">👁</span>
+      <span class="section-title">Reddit</span>
+      <span class="source-badge badge-reddit">REDDIT RSS</span>
+    </div>
+    <div class="feed-grid" id="reddit-feed">
+      <div class="loading">LOADING REDDIT THREADS</div>
+    </div>
+  </div>
+
+  <footer>HORROR FEED // POWERED BY RSS // NO API KEYS REQUIRED</footer>
+</div>
+
+<script>
+const DEFAULTS = {
+  yt: ['UCVtFOytbRpEvzLjvqGG5gxQ', 'UC9-y-6csu5WGm29I7JiwpnA', 'UCnUYZLuoy1rq1aVMwx4aTzw'],
+  subs: ['horror', 'Paranormal'],
+  discordUrl: 'https://discord.gg/halloween',
+  discordName: 'Halloween Horror Community'
+};
+// ↑ YouTubeチャンネルID例: 1=Nuke's Top 5, 2=Vsauce, 3=SCP Foundation系
+// 実際に使いたいチャンネルはSettings画面で変更してください
+
+function getConfig() {
+  return {
+    yt: [
+      localStorage.getItem('yt1') || DEFAULTS.yt[0],
+      localStorage.getItem('yt2') || DEFAULTS.yt[1],
+      localStorage.getItem('yt3') || DEFAULTS.yt[2],
+    ].filter(Boolean),
+    subs: [
+      localStorage.getItem('sub1') || DEFAULTS.subs[0],
+      localStorage.getItem('sub2') || DEFAULTS.subs[1],
+    ].filter(Boolean),
+    discordUrl: localStorage.getItem('discordUrl') || DEFAULTS.discordUrl,
+    discordName: localStorage.getItem('discordName') || DEFAULTS.discordName,
+  };
+}
+
+function saveConfig() {
+  ['yt1','yt2','yt3','sub1','sub2'].forEach(id => {
+    const v = document.getElementById(id).value.trim();
+    if (v) localStorage.setItem(id, v);
+    else localStorage.removeItem(id);
+  });
+  const du = document.getElementById('discord-url').value.trim();
+  const dn = document.getElementById('discord-name').value.trim();
+  if (du) localStorage.setItem('discordUrl', du);
+  if (dn) localStorage.setItem('discordName', dn);
+  document.getElementById('config-panel').style.display = 'none';
+  loadAll();
+}
+
+function resetConfig() {
+  ['yt1','yt2','yt3','sub1','sub2','discordUrl','discordName'].forEach(k => localStorage.removeItem(k));
+  loadInputs();
+  loadAll();
+}
+
+function loadInputs() {
+  const c = getConfig();
+  document.getElementById('yt1').value = localStorage.getItem('yt1') || '';
+  document.getElementById('yt2').value = localStorage.getItem('yt2') || '';
+  document.getElementById('yt3').value = localStorage.getItem('yt3') || '';
+  document.getElementById('sub1').value = localStorage.getItem('sub1') || '';
+  document.getElementById('sub2').value = localStorage.getItem('sub2') || '';
+  document.getElementById('discord-url').value = localStorage.getItem('discordUrl') || '';
+  document.getElementById('discord-name').value = localStorage.getItem('discordName') || '';
+}
+
+function toggleConfig() {
+  const p = document.getElementById('config-panel');
+  const show = p.style.display === 'none';
+  p.style.display = show ? 'block' : 'none';
+  if (show) loadInputs();
+}
+
+const PROXY = 'https://api.allorigins.win/get?url=';
+
+function timeAgo(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '';
+  const diff = (Date.now() - d) / 1000;
+  if (diff < 3600) return Math.floor(diff/60) + 'M AGO';
+  if (diff < 86400) return Math.floor(diff/3600) + 'H AGO';
+  return Math.floor(diff/86400) + 'D AGO';
+}
+
+async function fetchXML(url) {
+  try {
+    const res = await fetch(PROXY + encodeURIComponent(url));
+    const json = await res.json();
+    const parser = new DOMParser();
+    return parser.parseFromString(json.contents, 'text/xml');
+  } catch(e) {
+    return null;
+  }
+}
+
+async function loadYoutube() {
+  const config = getConfig();
+  const container = document.getElementById('youtube-feed');
+  container.innerHTML = '<div class="loading">LOADING HORROR VIDEOS</div>';
+  
+  let allItems = [];
+  for (const chId of config.yt) {
+    if (!chId) continue;
+    const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${chId}`;
+    const xml = await fetchXML(url);
+    if (!xml) continue;
+    const entries = xml.querySelectorAll('entry');
+    entries.forEach(e => {
+      const videoId = e.querySelector('videoId')?.textContent;
+      const title = e.querySelector('title')?.textContent;
+      const author = e.querySelector('author name')?.textContent;
+      const published = e.querySelector('published')?.textContent;
+      const thumb = videoId ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg` : null;
+      const link = `https://www.youtube.com/watch?v=${videoId}`;
+      if (title && videoId) allItems.push({ title, author, published, thumb, link, type: 'youtube' });
+    });
+  }
+
+  if (allItems.length === 0) {
+    container.innerHTML = `<div class="error-msg">⚠ FEED UNAVAILABLE — Settings からチャンネルIDを確認してください</div>`;
+    return;
+  }
+
+  allItems.sort((a,b) => new Date(b.published) - new Date(a.published));
+  allItems = allItems.slice(0, 9);
+
+  container.innerHTML = allItems.map(item => `
+    <a class="feed-card" href="${item.link}" target="_blank" rel="noopener">
+      ${item.thumb ? `<img class="card-thumb" src="${item.thumb}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+      <div class="card-meta">
+        <span class="channel-name">${escHtml(item.author || '')}</span>
+        <span class="card-date">${timeAgo(item.published)}</span>
+      </div>
+      <div class="card-title">${escHtml(item.title)}</div>
+    </a>
+  `).join('');
+}
+
+async function loadReddit() {
+  const config = getConfig();
+  const container = document.getElementById('reddit-feed');
+  container.innerHTML = '<div class="loading">LOADING REDDIT THREADS</div>';
+
+  let allItems = [];
+  for (const sub of config.subs) {
+    if (!sub) continue;
+    const url = `https://www.reddit.com/r/${sub}/hot.rss?limit=10`;
+    const xml = await fetchXML(url);
+    if (!xml) continue;
+    const items = xml.querySelectorAll('item, entry');
+    items.forEach(e => {
+      const title = e.querySelector('title')?.textContent?.replace('<![CDATA[','').replace(']]>','');
+      const link = e.querySelector('link')?.textContent || e.querySelector('link')?.getAttribute('href');
+      const published = e.querySelector('pubDate')?.textContent || e.querySelector('published')?.textContent;
+      const author = sub;
+      if (title && link) allItems.push({ title, link, published, author: 'r/' + sub });
+    });
+  }
+
+  if (allItems.length === 0) {
+    container.innerHTML = `<div class="error-msg">⚠ FEED UNAVAILABLE — ネットワークエラーまたはProxy制限の可能性があります</div>`;
+    return;
+  }
+
+  allItems = allItems.slice(0, 9);
+
+  container.innerHTML = allItems.map(item => `
+    <a class="feed-card" href="${item.link}" target="_blank" rel="noopener">
+      <div class="card-meta">
+        <span class="channel-name">${escHtml(item.author)}</span>
+        <span class="card-date">${timeAgo(item.published)}</span>
+      </div>
+      <div class="card-title">${escHtml(item.title)}</div>
+    </a>
+  `).join('');
+}
+
+function loadDiscord() {
+  const config = getConfig();
+  document.getElementById('discord-display-name').textContent = config.discordName;
+  const link = document.getElementById('discord-link');
+  if (config.discordUrl && config.discordUrl !== '#') {
+    link.href = config.discordUrl;
+  } else {
+    link.href = '#';
+    link.style.opacity = '0.4';
+    link.style.pointerEvents = 'none';
+    link.textContent = 'URL未設定';
+  }
+}
+
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadAll() {
+  loadDiscord();
+  const now = new Date().toLocaleTimeString('ja-JP');
+  document.getElementById('last-updated').textContent = `UPDATED: ${now}`;
+  await Promise.all([loadYoutube(), loadReddit()]);
+}
+
+loadAll();
+</script>
+</body>
+</html>
