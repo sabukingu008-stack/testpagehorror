@@ -591,28 +591,19 @@
 </div>
 
 <script>
-const DEFAULTS = {
-  yt: ['UCVtFOytbRpEvzLjvqGG5gxQ', 'UC9-y-6csu5WGm29I7JiwpnA', 'UCnUYZLuoy1rq1aVMwx4aTzw'],
-  subs: ['horror', 'Paranormal'],
-  discordUrl: 'https://discord.gg/halloween',
-  discordName: 'Halloween Horror Community'
-};
-// ↑ YouTubeチャンネルID例: 1=Nuke's Top 5, 2=Vsauce, 3=SCP Foundation系
-// 実際に使いたいチャンネルはSettings画面で変更してください
-
 function getConfig() {
   return {
     yt: [
-      localStorage.getItem('yt1') || DEFAULTS.yt[0],
-      localStorage.getItem('yt2') || DEFAULTS.yt[1],
-      localStorage.getItem('yt3') || DEFAULTS.yt[2],
+      localStorage.getItem('yt1'),
+      localStorage.getItem('yt2'),
+      localStorage.getItem('yt3'),
     ].filter(Boolean),
     subs: [
-      localStorage.getItem('sub1') || DEFAULTS.subs[0],
-      localStorage.getItem('sub2') || DEFAULTS.subs[1],
+      localStorage.getItem('sub1'),
+      localStorage.getItem('sub2'),
     ].filter(Boolean),
-    discordUrl: localStorage.getItem('discordUrl') || DEFAULTS.discordUrl,
-    discordName: localStorage.getItem('discordName') || DEFAULTS.discordName,
+    discordUrl: localStorage.getItem('discordUrl') || '',
+    discordName: localStorage.getItem('discordName') || 'Discord Community',
   };
 }
 
@@ -722,8 +713,12 @@ async function loadYoutube() {
     });
   }
 
+  if (config.yt.length === 0) {
+    container.innerHTML = `<div class="error-msg">⚙ Settings からYouTubeチャンネルIDを登録してください</div>`;
+    return;
+  }
   if (allItems.length === 0) {
-    container.innerHTML = `<div class="error-msg">⚠ FEED UNAVAILABLE — Settings からチャンネルIDを確認してください</div>`;
+    container.innerHTML = `<div class="error-msg">⚠ 動画を取得できませんでした — チャンネルIDが正しいか確認してください</div>`;
     return;
   }
 
@@ -763,8 +758,12 @@ async function loadReddit() {
     });
   }
 
+  if (config.subs.length === 0) {
+    container.innerHTML = `<div class="error-msg">⚙ Settings からSubredditを登録してください（例: horror）</div>`;
+    return;
+  }
   if (allItems.length === 0) {
-    container.innerHTML = `<div class="error-msg">⚠ FEED UNAVAILABLE — ネットワークエラーまたはProxy制限の可能性があります</div>`;
+    container.innerHTML = `<div class="error-msg">⚠ 取得できませんでした — Subreddit名が正しいか確認してください</div>`;
     return;
   }
 
