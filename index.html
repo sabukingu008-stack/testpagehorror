@@ -654,7 +654,27 @@ function toggleConfig() {
   if (show) loadInputs();
 }
 
-const PROXY = 'https://api.allorigins.win/get?url=';
+// 複数プロキシを順番に試してどれかが成功したら使う
+const PROXIES = [
+  async (url) => {
+    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+    if (!res.ok) throw new Error(res.status);
+    const text = await res.text();
+    return new DOMParser().parseFromString(text, 'text/xml');
+  },
+  async (url) => {
+    const res = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`);
+    if (!res.ok) throw new Error(res.status);
+    const text = await res.text();
+    return new DOMParser().parseFromString(text, 'text/xml');
+  },
+  async (url) => {
+    const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+    if (!res.ok) throw new Error(res.status);
+    const json = await res.json();
+    return new DOMParser().parseFromString(json.contents, 'text/xml');
+  },
+];
 
 function timeAgo(dateStr) {
   const d = new Date(dateStr);
@@ -666,14 +686,17 @@ function timeAgo(dateStr) {
 }
 
 async function fetchXML(url) {
-  try {
-    const res = await fetch(PROXY + encodeURIComponent(url));
-    const json = await res.json();
-    const parser = new DOMParser();
-    return parser.parseFromString(json.contents, 'text/xml');
-  } catch(e) {
-    return null;
+  for (const proxy of PROXIES) {
+    try {
+      const xml = await proxy(url);
+      // パースエラーチェック
+      if (xml.querySelector('parsererror')) continue;
+      return xml;
+    } catch(e) {
+      continue;
+    }
   }
+  return null;
 }
 
 async function loadYoutube() {
