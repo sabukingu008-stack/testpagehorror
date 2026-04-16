@@ -648,7 +648,7 @@ function toggleConfig() {
 // 複数プロキシを順番に試してどれかが成功したら使う
 const PROXIES = [
   async (url) => {
-    const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+    const res = await fetch(`https://corsproxy.io/?url=${encodeURIComponent(url)}`);
     if (!res.ok) throw new Error(res.status);
     const text = await res.text();
     return new DOMParser().parseFromString(text, 'text/xml');
